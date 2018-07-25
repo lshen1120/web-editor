@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <style>
+        .left_container {
+            float: left;
+            width: 300px;
+        }
+    </style>
+    <link rel="stylesheet" href="/static/node_modules/jstree/dist/themes/default/style.min.css"/>
+    <script src="/static/node_modules/jquery/dist/jquery.min.js"></script>
+    <link href="https://cdn.bootcss.com/bootstrap/4.1.1/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.bootcss.com/bootstrap/4.1.1/js/bootstrap.js"></script>
+    <script src="/static/node_modules/jstree/dist/jstree.js"></script>
+
+    <script src="/static/libs/bootstrap-tabs/js/bootstrap-tab.js"></script>
+    <link href="/static/libs/bootstrap-tabs/css/bootstrap-tab.css" />
+
+    <style>
+        .container {
+            margin-top: 10px;
+        }
+
+        .nav-tabs > li {
+            position: relative;
+        }
+
+        .nav-tabs > li > a {
+            display: inline-block;
+        }
+
+        .nav-tabs > li > span {
+            display: none;
+            cursor: pointer;
+            position: absolute;
+            right: 6px;
+            top: 8px;
+            color: red;
+        }
+
+        .nav-tabs > li:hover > span {
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Monaco Editor Sample</h2>
+<div>
+    <div id="jstree" class="left_container"></div>
+    <div class="left_container">
+        <!--<div id="tabContainer"></div>-->
+
+        <div class="tab-content">
+            <div class="tab-pane active" id="contact_01">Contact Form: Joe Smith</div>
+            <div class="tab-pane" id="contact_02">Contact Form: Molly Lewis</div>
+        </div>
+
+        <div id="container" style="width:800px;height:600px;border:1px solid grey"></div>
+        <div id="status_lang"></div>
+    </div>
+</div>
+
+<script>
+</script>
+<!-- OR ANY OTHER AMD LOADER HERE INSTEAD OF loader.js -->
+<script src="/static/node_modules/monaco-editor/min/vs/loader.js"></script>
+<script>
+
+      $("#tabContainer").tabs({
+        data: [{
+            id: 'home',
+            text: '百度一下',
+            url: "tab_first.html",
+            closeable: true
+        }, {
+            id: 'admineap',
+            text: 'AdminEAP',
+            url: "tab_second.html"
+        }, {
+            id: 'edit',
+            text: '编辑人员',
+            url: "tab_content.html",
+            closeable: true
+        }],
+        showIndex: 1,
+        loadAll: false
+    });
+
+    require.config({paths: {'vs': '/static/node_modules/monaco-editor/min/vs'}});
+    require(['vs/editor/editor.main'], function () {
+        var editor = monaco.editor.create(document.getElementById('container'), {
+            value: [
+                'function x() {',
+                '\tconsole.log("Hello world!");',
+                '}'
+            ].join('\n'),
+            language: 'javascript',
+            theme: 'vs-dark'
+        });
+        var model = editor.getModel();
+
+        var languanges = monaco.languages.getLanguages();
+
+        var language_map = {};
+        languanges.forEach(function (languange) {
+            languange.extensions.forEach(function (extention) {
+                language_map[extention] = languange.id;
+            });
+        });
+
+        $('#jstree').jstree({
+            "plugins": ["contextmenu"],
+            'core': {
+                'data': {
+                    'url': function (node) {
+                        return '/tree';
+                    },
+                    'data': function (node) {
+                        var path = node.id;
+                        if (path == '#') {
+                            path = '';
+                        }
+                        return {'path': path};
+                    }
+                }
+            }
+        });
+        $("#jstree").on('select_node.jstree', function (e, data) {
+            if (data.node.li_attr.is_file) {
+                var path = data.node.li_attr.path;
+                $.getJSON('/resources?path=' + encodeURIComponent(path), function (response) {
+                    editor.setValue(response.data);
+                    var lang = 'plaintext';
+                    for (var ext in language_map) {
+                        if (path.endsWith(ext)) {
+                            lang = language_map[ext];
+                            break;
+                        }
+                    }
+                    monaco.editor.setModelLanguage(model, lang);
+                    $('#status_lang').text(lang);
+                })
+            }
+        });
+        window.editor = editor;
+    });
+</script>
+</body>
+</html>

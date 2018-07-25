@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
+    <link rel="stylesheet" href="/static/node_modules/jstree/dist/themes/default/style.min.css"/>
+    <script src="/static/node_modules/jquery/dist/jquery.min.js"></script>
+</head>
+<body>
+
+<div>
+    <div id="container" style="width:100vw;height: 100vh;border:1px solid grey"></div>
+    <div id="status_lang"></div>
+</div>
+
+<script>
+</script>
+<!-- OR ANY OTHER AMD LOADER HERE INSTEAD OF loader.js -->
+<script src="/static/node_modules/monaco-editor/min/vs/loader.js"></script>
+<script>
+    require.config({paths: {'vs': '/static/node_modules/monaco-editor/min/vs'}});
+    require(['vs/editor/editor.main'], function () {
+        var can_edit = false;
+        var editor = monaco.editor.create(document.getElementById('container'), {
+            value: [
+                '读取中...'
+            ].join('\n'),
+            language: 'javascript',
+            theme: 'vs-dark'
+        });
+        var model = editor.getModel();
+
+        var languanges = monaco.languages.getLanguages();
+
+        var language_map = {};
+        languanges.forEach(function (languange) {
+            languange.extensions.forEach(function (extention) {
+                language_map[extention] = languange.id;
+            });
+        });
+
+        function getParameterByName(name, url) {
+            if (!url) url = window.location.href;
+            name = name.replace(/[\[\]]/g, '\\$&');
+            var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+                results = regex.exec(url);
+            if (!results) return null;
+            if (!results[2]) return '';
+            return decodeURIComponent(results[2].replace(/\+/g, ' '));
+        }
+
+        var path = getParameterByName('path');
+        $.getJSON('/resources?path=' + encodeURIComponent(path), function (respnse) {
+            editor.setValue(respnse.data);
+            if (respnse.error === 0) {
+                can_edit = true;
+            }
+            var lang = 'plaintext';
+            for (var ext in language_map) {
+                if (path.endsWith(ext)) {
+                    lang = language_map[ext];
+                    break;
+                }
+            }
+            monaco.editor.setModelLanguage(model, lang);
+            $('#status_lang').text(lang);
+
+        });
+
+        var myBinding = editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.KEY_S, function () {
+                if (!can_edit) {
+                    alert('不可编辑');
+                } else {
+                    var text = editor.getValue();
+
+                    $.ajax({
+                            url: '/resources?path=' + encodeURIComponent(path),
+                            type: 'PUT',
+                            data: {
+                                text: text
+                            },
+                            success: function (response) {
+                                if (response.error === 0) {
+                                    alert('保存成功');
+                                } else {
+                                    alert('保存失败');
+                                }
+                            },
+                            fail: function () {
+                                alert('保存失败');
+                            }
+                        }
+                    )
+
+                }
+
+            }
+        );
+
+        window.editor = editor;
+    });
+</script>
+</body>
+</html>

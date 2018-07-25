@@ -1,0 +1,38 @@
+body {
+    margin: 0;
+    pad: 0;
+}
+.topbar {
+    margin-top: 12px;
+}
+.headimg {
+    width: 100%;
+}
+.titlebar {
+    color: darkgoldenrod;
+    text-align: center;
+}
+.querybtn {
+    margin: auto 0;
+    width: 100%;
+    height: 40px;
+}
+.resultbox {
+    margin-top: 30px;
+}
+.resultbox .row {
+    margin-top: 10px;
+    font-size: 18px;
+}
+.rb-label {
+    color: grey;
+}
+.bottombar {
+    position: fixed;
+    padding: 10px;
+    bottom: 0;
+    width: 100%;
+    color: gray;
+    font-size: 18px;
+    background: white;
+}

@@ -1,0 +1,3 @@
+recursive-include webeditor *.html *.js *.css *.jpg *.png *.gif
+include LICENSE
+include requirements.txt
